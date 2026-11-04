@@ -1,7 +1,20 @@
 [project]
-name = "fastapi-react-template"
+name = "unievent-event-management"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi[standard]>=0.141.1",
+    "fastapi[standard]>=0.115.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
 ]
+
+[tool.pyright]
+include = ["backend"]
+extraPaths = ["backend"]
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    "frontend",
+    ".venv"
+]
+pythonVersion = "3.10"

@@ -1,37 +1,64 @@
+import os
+import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
+# Ensure backend directory is in Python path for all imports
+BACKEND_DIR = Path(__file__).resolve().parent
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-app = FastAPI(title="FastAPI + React")
+from database import engine, Base
+from models import seed_initial_events
+from routes.events import router as events_router
 
 
-@app.get("/api/health")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create all database tables on startup
+    Base.metadata.create_all(bind=engine)
+    # Seed sample events if database is empty
+    seed_initial_events()
+    yield
+
+
+app = FastAPI(
+    title="UniEvent API — University Event Management Platform",
+    description="REST API for CSE309 Mid Project Assessment MVP: Event Management CRUD",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# Enable CORS for local development and Vercel deployments
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include Event CRUD Router
+app.include_router(events_router)
+
+
+# Health check endpoint
+@app.get("/api/health", tags=["system"])
 def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "app": "UniEvent", "version": "1.0.0"}
 
 
-@app.get("/api/hello")
+@app.get("/api/hello", tags=["system"])
 def hello(name: str = "World") -> dict[str, str]:
     return {"message": f"Hello, {name}!"}
 
 
-# EXERCISE (part 1): uncomment to add POST /api/user, then test it at /docs.
-# from pydantic import BaseModel, EmailStr
-#
-#
-# class User(BaseModel):
-#     id: int
-#     name: str
-#     email: EmailStr  # invalid emails get a 422 response automatically
-#
-#
-# @app.post("/api/user")
-# def create_user(user: User) -> dict[str, str]:
-#     return {"message": f"Hello {user.name} (ID {user.id}), we'll email you at {user.email}."}
-
-
+# Mount frontend dist when built for production / static hosting
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
-# dist/ only exists after `npm run build`; in dev the Vite server serves the UI.
 if FRONTEND_DIR.is_dir():
-    app.frontend("/", directory=FRONTEND_DIR)
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
