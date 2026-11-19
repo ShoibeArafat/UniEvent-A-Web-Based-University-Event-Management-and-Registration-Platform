@@ -8,10 +8,9 @@ if str(backend_root) not in sys.path:
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
 from database import get_db
-from models import Event
+import crud
 from schemas import EventCreate, EventUpdate, EventResponse, MessageResponse
 
 router = APIRouter(prefix="/api/events", tags=["events"])
@@ -25,20 +24,7 @@ router = APIRouter(prefix="/api/events", tags=["events"])
     description="Adds a new event record with validated fields (title, date, venue, category, organizer).",
 )
 def create_event(event_in: EventCreate, db: Session = Depends(get_db)):
-    db_event = Event(
-        title=event_in.title.strip(),
-        description=event_in.description.strip(),
-        location=event_in.location.strip(),
-        event_date=event_in.event_date.strip(),
-        organizer=event_in.organizer.strip(),
-        category=event_in.category.strip(),
-        capacity=event_in.capacity,
-        status=event_in.status.strip() if event_in.status else "Upcoming",
-    )
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-    return db_event
+    return crud.create_event(db=db, event_in=event_in)
 
 
 @router.get(
@@ -52,25 +38,7 @@ def get_events(
     search: Optional[str] = Query(None, description="Search term for title, description, or organizer"),
     db: Session = Depends(get_db),
 ):
-    query = db.query(Event)
-
-    if category and category.lower() != "all":
-        query = query.filter(Event.category.ilike(f"%{category.strip()}%"))
-
-    if search and search.strip():
-        term = f"%{search.strip()}%"
-        query = query.filter(
-            or_(
-                Event.title.ilike(term),
-                Event.description.ilike(term),
-                Event.organizer.ilike(term),
-                Event.location.ilike(term),
-            )
-        )
-
-    # Order by event_date ascending
-    events = query.order_by(Event.event_date.asc(), Event.id.desc()).all()
-    return events
+    return crud.get_events(db=db, category=category, search=search)
 
 
 @router.get(
@@ -80,7 +48,7 @@ def get_events(
     description="Retrieves full details for a specific university event by its numeric primary key.",
 )
 def get_single_event(event_id: int, db: Session = Depends(get_db)):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = crud.get_event_by_id(db=db, event_id=event_id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -96,24 +64,13 @@ def get_single_event(event_id: int, db: Session = Depends(get_db)):
     description="Updates one or more fields of an event record by ID.",
 )
 def update_event(event_id: int, event_in: EventUpdate, db: Session = Depends(get_db)):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = crud.get_event_by_id(db=db, event_id=event_id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Event with ID {event_id} not found",
         )
-
-    update_data = event_in.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        if value is not None:
-            if isinstance(value, str):
-                setattr(event, field, value.strip())
-            else:
-                setattr(event, field, value)
-
-    db.commit()
-    db.refresh(event)
-    return event
+    return crud.update_event(db=db, db_event=event, event_in=event_in)
 
 
 @router.delete(
@@ -123,7 +80,7 @@ def update_event(event_id: int, event_in: EventUpdate, db: Session = Depends(get
     description="Removes a university event permanently from the database.",
 )
 def delete_event(event_id: int, db: Session = Depends(get_db)):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = crud.get_event_by_id(db=db, event_id=event_id)
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -131,8 +88,7 @@ def delete_event(event_id: int, db: Session = Depends(get_db)):
         )
 
     event_title = event.title
-    db.delete(event)
-    db.commit()
+    crud.delete_event(db=db, db_event=event)
     return MessageResponse(
         message=f"Event '{event_title}' (ID {event_id}) was deleted successfully.",
         id=event_id,
