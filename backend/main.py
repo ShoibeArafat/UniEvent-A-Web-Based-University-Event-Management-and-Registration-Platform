@@ -10,6 +10,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from database import engine, Base
@@ -30,8 +31,26 @@ app = FastAPI(
     title="UniEvent API — University Event Management Platform",
     description="REST API for CSE309 Mid Project Assessment MVP: Event Management CRUD",
     version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
     lifespan=lifespan,
 )
+
+# Convenience redirects for root paths
+@app.get("/docs", include_in_schema=False)
+def docs_redirect():
+    return RedirectResponse(url="/api/docs")
+
+
+@app.get("/redoc", include_in_schema=False)
+def redoc_redirect():
+    return RedirectResponse(url="/api/redoc")
+
+
+@app.get("/openapi.json", include_in_schema=False)
+def openapi_redirect():
+    return RedirectResponse(url="/api/openapi.json")
 
 # Enable CORS for local development and Vercel deployments
 app.add_middleware(
