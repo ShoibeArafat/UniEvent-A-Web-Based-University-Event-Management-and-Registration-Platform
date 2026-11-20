@@ -16,20 +16,22 @@ from fastapi.staticfiles import StaticFiles
 from database import engine, Base
 from models import seed_initial_events
 from routes.events import router as events_router
+from routes.auth import router as auth_router
+from routes.users import router as users_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create all database tables on startup
+    # Create all database tables on startup (users, user_sessions, events)
     Base.metadata.create_all(bind=engine)
-    # Seed sample events if database is empty
+    # Seed sample events and demo users if database is empty
     seed_initial_events()
     yield
 
 
 app = FastAPI(
     title="UniEvent API — University Event Management Platform",
-    description="REST API for CSE309 Mid Project Assessment MVP: Event Management CRUD",
+    description="REST API for CSE309 University Event Management Platform with JWT Authentication, Revocable Sessions, and Event Management CRUD",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -52,6 +54,7 @@ def redoc_redirect():
 def openapi_redirect():
     return RedirectResponse(url="/api/openapi.json")
 
+
 # Enable CORS for local development and Vercel deployments
 app.add_middleware(
     CORSMiddleware,
@@ -61,7 +64,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Event CRUD Router
+# Include Routers
+app.include_router(auth_router)
+app.include_router(users_router)
 app.include_router(events_router)
 
 
