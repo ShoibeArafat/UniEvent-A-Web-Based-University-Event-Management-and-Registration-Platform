@@ -1,123 +1,256 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
-import "./login.css";
-
-const API_URL: string = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-
-interface LoginResponse {
-  access_token: string;
-}
+import React, { useState } from "react"
+import { useAuth } from "../context/AuthContext"
+import { BuildingIcon, SparklesIcon } from "../components/Icons"
+import "./Login.css"
 
 interface LoginProps {
-  onSuccess?: () => void;
-}
-
-interface FieldErrors {
-  email?: string;
-  password?: string;
-}
-
-async function loginRequest(email: string, password: string): Promise<LoginResponse> {
-  const res = await fetch(`${API_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) {
-    if (res.status === 401) throw new Error("Email or password is incorrect.");
-    throw new Error("Could not sign in. Try again in a moment.");
-  }
-  return res.json();
+  onSuccess?: () => void
 }
 
 export default function Login({ onSuccess }: LoginProps) {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [formError, setFormError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const { login, signup } = useAuth()
+  const [mode, setMode] = useState<"login" | "signup">("login")
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setFormError("");
+  // Login form state
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
 
-    const next: FieldErrors = {};
-    if (!email.trim()) next.email = "Enter your university email.";
-    else if (!/^\S+@\S+\.\S+$/.test(email)) next.email = "Enter a valid email address.";
-    if (!password) next.password = "Enter your password.";
-    setErrors(next);
-    if (Object.keys(next).length > 0) return;
+  // Signup form state
+  const [signupName, setSignupName] = useState("")
+  const [signupEmail, setSignupEmail] = useState("")
+  const [signupPassword, setSignupPassword] = useState("")
+  const [signupConfirm, setSignupConfirm] = useState("")
 
-    setLoading(true);
+  // Status
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleTabSwitch = (newMode: "login" | "signup") => {
+    setMode(newMode)
+    setError(null)
+  }
+
+  const fillDemoAccount = (email: string, pass: string) => {
+    setMode("login")
+    setLoginEmail(email)
+    setLoginPassword(pass)
+    setError(null)
+  }
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
     try {
-      const data = await loginRequest(email.trim(), password);
-      localStorage.setItem("access_token", data.access_token);
-      onSuccess?.();
+      await login(loginEmail, loginPassword)
+      onSuccess?.()
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : "Invalid credentials. Please verify your email and password.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (signupPassword.length < 6) {
+      setError("Password must be at least 6 characters long.")
+      return
+    }
+
+    if (signupPassword !== signupConfirm) {
+      setError("Passwords do not match.")
+      return
+    }
+
+    setLoading(true)
+    try {
+      await signup(signupName, signupEmail, signupPassword)
+      onSuccess?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to register account.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <main className="login">
-      <form className="login__card" onSubmit={handleSubmit} noValidate>
-        <h1>Sign in</h1>
-        <p className="login__sub">Use your university account to browse and manage events.</p>
+    <main className="login-page-wrapper">
+      <div className="login-page-card">
+        {/* Brand Header */}
+        <div className="login-brand-header">
+          <div className="login-brand-logo">
+            <BuildingIcon width={26} height={26} />
+          </div>
+          <div>
+            <h1 className="login-brand-title">UniEvent</h1>
+            <p className="login-brand-subtitle">University Event Management Platform</p>
+          </div>
+        </div>
 
-        {formError && (
-          <div className="login__alert" role="alert">
-            {formError}
+        {/* Tab Switcher */}
+        <div className="login-tab-row">
+          <button
+            type="button"
+            className={`login-tab-btn ${mode === "login" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("login")}
+          >
+            Sign In
+          </button>
+          <button
+            type="button"
+            className={`login-tab-btn ${mode === "signup" ? "active" : ""}`}
+            onClick={() => handleTabSwitch("signup")}
+          >
+            Create Account
+          </button>
+        </div>
+
+        {/* Error Alert */}
+        {error && (
+          <div className="login-error-alert" role="alert">
+            {error}
           </div>
         )}
 
-        <div className="field">
-          <label htmlFor="email">University email</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@university.edu"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            aria-invalid={!!errors.email}
-          />
-          {errors.email && <span className="field__error">{errors.email}</span>}
-        </div>
-
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <div className="field__password">
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              aria-invalid={!!errors.password}
-            />
-            <button
-              type="button"
-              className="field__toggle"
-              onClick={() => setShowPassword((s) => !s)}
-              aria-pressed={showPassword}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
+        {/* Demo Quick-Fill for Teacher Assessment */}
+        {mode === "login" && (
+          <div className="login-demo-box">
+            <div className="login-demo-header">
+              <SparklesIcon width={14} height={14} />
+              <span>Quick Demo Login (Teacher Viva):</span>
+            </div>
+            <div className="login-demo-pills">
+              <button
+                type="button"
+                className="demo-pill-btn"
+                onClick={() => fillDemoAccount("admin1@unievent.edu", "Admin@12345")}
+              >
+                Admin (admin1)
+              </button>
+              <button
+                type="button"
+                className="demo-pill-btn"
+                onClick={() => fillDemoAccount("student@unievent.edu", "User@12345")}
+              >
+                Student (student)
+              </button>
+              <button
+                type="button"
+                className="demo-pill-btn"
+                onClick={() => fillDemoAccount("organizer@unievent.edu", "User@12345")}
+              >
+                Organizer (organizer)
+              </button>
+            </div>
           </div>
-          {errors.password && <span className="field__error">{errors.password}</span>}
-        </div>
+        )}
 
-        <button className="login__submit" type="submit" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
-        </button>
+        {/* Sign In Form */}
+        {mode === "login" ? (
+          <form onSubmit={handleLoginSubmit} className="modal-form">
+            <div className="form-group">
+              <label htmlFor="login-email">University Email</label>
+              <input
+                id="login-email"
+                type="email"
+                className="form-input"
+                placeholder="you@unievent.edu"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
 
-        <p className="login__footer">
-          New to UniEvent? <a href="/register">Create an account</a>
-        </p>
-      </form>
+            <div className="form-group">
+              <label htmlFor="login-password">Password</label>
+              <input
+                id="login-password"
+                type="password"
+                className="form-input"
+                placeholder="••••••••"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block py-3 mt-2" disabled={loading}>
+              {loading ? "Authenticating..." : "Sign In to Dashboard"}
+            </button>
+          </form>
+        ) : (
+          /* Sign Up Form */
+          <form onSubmit={handleSignupSubmit} className="modal-form">
+            <div className="form-group">
+              <label htmlFor="signup-name">Full Name</label>
+              <input
+                id="signup-name"
+                type="text"
+                className="form-input"
+                placeholder="Shoibe Arafat"
+                value={signupName}
+                onChange={(e) => setSignupName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="signup-email">University Email</label>
+              <input
+                id="signup-email"
+                type="email"
+                className="form-input"
+                placeholder="student@unievent.edu"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="signup-password">Password</label>
+                <input
+                  id="signup-password"
+                  type="password"
+                  className="form-input"
+                  placeholder="••••••••"
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="signup-confirm">Confirm Password</label>
+                <input
+                  id="signup-confirm"
+                  type="password"
+                  className="form-input"
+                  placeholder="••••••••"
+                  value={signupConfirm}
+                  onChange={(e) => setSignupConfirm(e.target.value)}
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block py-3 mt-2" disabled={loading}>
+              {loading ? "Creating Account..." : "Register & Continue"}
+            </button>
+          </form>
+        )}
+      </div>
     </main>
-  );
+  )
 }

@@ -1,17 +1,22 @@
 import { useState, useEffect, useCallback } from "react"
 import type { Event, EventCreateInput } from "./types/event"
 import { getEvents, createEvent, updateEvent, deleteEvent } from "./services/api"
+import { useAuth } from "./context/AuthContext"
+import Login from "./Pages/Login"
 import { Navbar } from "./components/Navbar"
 import { EventCard } from "./components/EventCard"
 import { EventModal } from "./components/EventModal"
 import { EventDetailModal } from "./components/EventDetailModal"
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal"
+import { ProfileModal } from "./components/ProfileModal"
 import { Toast, type ToastMessage } from "./components/Toast"
 import { SearchIcon, PlusIcon, CalendarIcon, SparklesIcon, UsersIcon } from "./components/Icons"
 
 const CATEGORIES = ["All", "Technology", "Competition", "Workshop", "Cultural", "Seminar"]
 
 export default function App() {
+  const { user, token, isAuthenticated, isLoading } = useAuth()
+
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -20,11 +25,14 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Modal states
+  // Event modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [viewingEventId, setViewingEventId] = useState<number | null>(null)
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null)
+
+  // Profile modal state
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
 
   // Toast feedback
   const [toasts, setToasts] = useState<ToastMessage[]>([])
@@ -56,18 +64,20 @@ export default function App() {
   }, [selectedCategory, searchQuery])
 
   useEffect(() => {
-    loadEvents()
-  }, [loadEvents])
+    if (isAuthenticated) {
+      loadEvents()
+    }
+  }, [isAuthenticated, loadEvents])
 
   // Save Event (Create or Update)
   async function handleSaveEvent(data: EventCreateInput, eventId?: number) {
     if (eventId) {
       // PUT /api/events/{id} (Update)
-      const updated = await updateEvent(eventId, data)
+      const updated = await updateEvent(eventId, data, token)
       addToast("success", `Event "${updated.title}" updated successfully!`)
     } else {
       // POST /api/events (Create)
-      const created = await createEvent(data)
+      const created = await createEvent(data, token)
       addToast("success", `Event "${created.title}" published successfully!`)
     }
     await loadEvents()
@@ -76,7 +86,7 @@ export default function App() {
   // Delete Event (DELETE /api/events/{id})
   async function handleDeleteEvent(id: number) {
     try {
-      const res = await deleteEvent(id)
+      const res = await deleteEvent(id, token)
       addToast("info", res.message || "Event removed successfully.")
       await loadEvents()
     } catch (err) {
@@ -103,14 +113,39 @@ export default function App() {
     setDeletingEvent(event)
   }
 
-  // Stats calculation
+  // 1. Session Loading Screen
+  if (isLoading) {
+    return (
+      <div className="login-loading-screen">
+        <div className="spinner"></div>
+        <p className="mt-3 text-muted">Checking authentication session...</p>
+      </div>
+    )
+  }
+
+  // 2. Unauthenticated: Show dedicated, standalone Login Page first
+  if (!isAuthenticated) {
+    return (
+      <>
+        <Login onSuccess={() => addToast("success", "Welcome to UniEvent Dashboard!")} />
+        <Toast toasts={toasts} onDismiss={removeToast} />
+      </>
+    )
+  }
+
+  // 3. Authenticated: Render Full Dashboard
   const upcomingCount = events.filter((e) => e.status.toLowerCase() === "upcoming").length
   const uniqueOrganizers = new Set(events.map((e) => e.organizer)).size
 
   return (
     <div className="app-layout">
-      {/* Navbar with brand and actions */}
-      <Navbar totalEvents={events.length} onOpenCreate={handleOpenCreate} />
+      {/* Navbar with brand, live user profile, role badge, and sign out */}
+      <Navbar
+        totalEvents={events.length}
+        onOpenCreate={handleOpenCreate}
+        onOpenProfile={() => setProfileModalOpen(true)}
+        onLogoutToast={() => addToast("info", "You have signed out successfully.")}
+      />
 
       {/* Main Container */}
       <main className="main-content">
@@ -120,7 +155,7 @@ export default function App() {
             <div>
               <h2 className="hero-title">University Events Dashboard</h2>
               <p className="hero-subtitle">
-                Explore, schedule, and organize academic seminars, tech competitions, and student activities.
+                Welcome back, {user?.name}! Explore, schedule, and organize academic seminars, tech competitions, and activities.
               </p>
             </div>
           </div>
@@ -277,6 +312,13 @@ export default function App() {
         event={deletingEvent}
         onClose={() => setDeletingEvent(null)}
         onConfirm={handleDeleteEvent}
+      />
+
+      {/* 4. User Profile & Active Sessions Modal */}
+      <ProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        onSuccess={(msg) => addToast("success", msg)}
       />
 
       {/* Toast notifications */}

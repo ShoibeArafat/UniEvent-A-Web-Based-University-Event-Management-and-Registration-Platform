@@ -54,35 +54,48 @@ export async function getEventById(id: number): Promise<Event> {
 }
 
 /**
- * 3. Create: Add a new event record.
+ * 3. Create: Add a new event record with optional Bearer token authorization.
  */
-export async function createEvent(data: EventCreateInput): Promise<Event> {
+export async function createEvent(data: EventCreateInput, token?: string | null): Promise<Event> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
   const res = await fetch(API_BASE_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(data),
   })
   return handleResponse<Event>(res)
 }
 
 /**
- * 4. Update: Edit an existing event record by ID.
+ * 4. Update: Edit an existing event record by ID with optional Bearer token authorization.
  */
-export async function updateEvent(id: number, data: EventUpdateInput): Promise<Event> {
+export async function updateEvent(id: number, data: EventUpdateInput, token?: string | null): Promise<Event> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
   const res = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(data),
   })
   return handleResponse<Event>(res)
 }
 
 /**
- * 5. Delete: Delete an event record by ID.
+ * 5. Delete: Delete an event record by ID with optional Bearer token authorization.
  */
-export async function deleteEvent(id: number): Promise<{ message: string; id?: number }> {
+export async function deleteEvent(id: number, token?: string | null): Promise<{ message: string; id?: number }> {
+  const headers: Record<string, string> = {}
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
   const res = await fetch(`${API_BASE_URL}/${id}`, {
     method: "DELETE",
+    headers,
   })
   return handleResponse<{ message: string; id?: number }>(res)
 }
