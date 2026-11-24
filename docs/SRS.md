@@ -27,29 +27,29 @@ The web application supports Students, Event Organizers, and Administrators. It 
 
 ```mermaid
 flowchart LR
-    U[Student / Organizer / Admin] --> FE[React Web Client]
-    FE -->|HTTPS REST / JSON| API[Node.js + Express API]
-    API --> AUTH[Authentication and RBAC]
-    API --> SVC[Event / Registration / Attendance Services]
-    AUTH --> DB[(MySQL)]
+    U[Student / Organizer / Admin] --> FE[React 19 TypeScript Client]
+    FE -->|HTTPS REST / JSON| API[FastAPI Python Backend]
+    API --> AUTH[JWT Auth, Sessions & RBAC]
+    API --> SVC[Event, Team & Admin Services]
+    AUTH --> DB[(SQLite / Supabase PostgreSQL)]
     SVC --> DB
-    SVC --> FS[Poster and Certificate Storage]
+    SVC --> AUDIT[Audit Logging Engine]
 ```
 
 ### 2.2 User Classes
 
 | User | Expected use |
 |---|---|
-| Student | Search events, register, view own tickets and certificates |
-| Organizer | Create events, manage registrations and attendance |
-| Administrator | Approve events, manage users/categories, view reports |
+| Student | Search events, create student events, participate in event teams |
+| Organizer | Create departmental events, manage organizing teams and permissions |
+| Administrator | System oversight, KPI analytics, user moderation/banning, audit logs, CSV exports |
 
 ### 2.3 Operating Environment
-- Modern desktop or mobile browser.
-- React.js frontend.
-- Node.js and Express.js backend.
-- MySQL database.
-- Git/GitHub, VS Code, and Postman for development/testing.
+- Modern desktop or mobile web browser.
+- React 19 + TypeScript + Vite frontend client.
+- Python 3.11 + FastAPI REST backend server.
+- SQLite (local development) and Supabase PostgreSQL (production cloud).
+- Git/GitHub, VS Code, and Pytest for development/testing.
 
 ### 2.4 Constraints
 - Protected operations must be authorized on the backend.

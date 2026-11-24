@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, EmailStr
 
 
@@ -36,6 +36,7 @@ class EventUpdate(BaseModel):
 class EventResponse(EventBase):
     id: int
     creator_id: Optional[int] = None
+    creator_name: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -69,6 +70,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     is_banned: bool = False
+    ban_reason: Optional[str] = None
     created_at: Optional[datetime] = None
 
     class Config:
@@ -108,6 +110,79 @@ class UserSessionResponse(BaseModel):
     id: int
     user_agent: Optional[str] = None
     expires_at: datetime
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# Event Organizing Team Schemas (Part 4)
+# ==========================================
+
+class TeamMemberAddRequest(BaseModel):
+    email: EmailStr = Field(..., description="University email address of user to invite")
+    role: str = Field(default="Editor", description="Role: Editor, Coordinator, Viewer")
+
+
+class TeamMemberUpdateRequest(BaseModel):
+    role: str = Field(..., description="Updated role: Owner, Editor, Coordinator, Viewer")
+
+
+class TeamMemberResponse(BaseModel):
+    id: int
+    user_id: int
+    user_name: str
+    user_email: str
+    role: str
+    joined_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class EventTeamResponse(BaseModel):
+    id: int
+    event_id: int
+    name: str
+    created_at: datetime
+    members: List[TeamMemberResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+# ==========================================
+# Admin Dashboard & Audit Log Schemas (Part 5)
+# ==========================================
+
+class AdminStatsResponse(BaseModel):
+    total_users: int
+    total_events: int
+    total_teams: int
+    active_sessions: int
+    banned_users: int
+    admin_count: int
+
+
+class UserRoleUpdateRequest(BaseModel):
+    role: str = Field(..., description="Role: Admin or User")
+
+
+class UserStatusUpdateRequest(BaseModel):
+    is_banned: bool = Field(..., description="True to ban user, False to activate")
+    ban_reason: Optional[str] = Field(None, max_length=255, description="Reason for suspension")
+
+
+class AuditLogResponse(BaseModel):
+    id: int
+    user_id: Optional[int] = None
+    user_email: Optional[str] = None
+    action: str
+    resource_type: str
+    resource_id: Optional[str] = None
+    details: Optional[str] = None
+    ip_address: Optional[str] = None
     created_at: datetime
 
     class Config:

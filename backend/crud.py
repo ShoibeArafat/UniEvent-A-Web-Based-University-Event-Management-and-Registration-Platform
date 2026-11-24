@@ -40,9 +40,14 @@ def get_event_by_id(db: Session, event_id: int) -> Optional[Event]:
     return db.query(Event).filter(Event.id == event_id).first()
 
 
-def create_event(db: Session, event_in: EventCreate) -> Event:
-    """Create and persist a new event record."""
+def create_event(
+    db: Session,
+    event_in: EventCreate,
+    creator_id: Optional[int] = None,
+) -> Event:
+    """Create and persist a new event record with optional creator ownership."""
     db_event = Event(
+        creator_id=creator_id,
         title=event_in.title.strip(),
         description=event_in.description.strip(),
         location=event_in.location.strip(),

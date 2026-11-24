@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, text
 from sqlalchemy.orm import relationship
 from database import Base, SessionLocal, engine
@@ -19,6 +20,7 @@ class User(Base):
     # Relationships
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     events = relationship("Event", back_populates="creator")
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserSession(Base):
@@ -58,10 +60,71 @@ class Event(Base):
 
     # Relationships
     creator = relationship("User", back_populates="events")
+    team = relationship("EventTeam", back_populates="event", uselist=False, cascade="all, delete-orphan")
+
+    @property
+    def creator_name(self) -> Optional[str]:
+        return self.creator.name if self.creator else None
+
+
+class EventTeam(Base):
+    """
+    Organizing team for an event.
+    Linked 1-to-1 with an Event.
+    """
+    __tablename__ = "event_teams"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    event_id = Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    name = Column(String(150), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    event = relationship("Event", back_populates="team")
+    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+
+
+class TeamMember(Base):
+    """
+    Member of an organizing team with specific permission tier:
+    Owner, Editor, Coordinator, Viewer.
+    """
+    __tablename__ = "team_members"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    team_id = Column(Integer, ForeignKey("event_teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(50), default="Editor", nullable=False)  # "Owner", "Editor", "Coordinator", "Viewer"
+    joined_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    team = relationship("EventTeam", back_populates="members")
+    user = relationship("User", back_populates="team_memberships")
+
+
+class AuditLog(Base):
+    """
+    Administrative and security audit trail.
+    Tracks critical system actions (logins, creates, updates, deletes, bans, role changes).
+    """
+    __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action = Column(String(100), nullable=False, index=True)
+    resource_type = Column(String(50), nullable=False)
+    resource_id = Column(String(50), nullable=True)
+    details = Column(Text, nullable=True)
+    ip_address = Column(String(100), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User")
 
 
 def auto_migrate_schema():
-    """Ensures newly added columns (such as creator_id) exist on existing tables."""
+    """Ensures newly added tables and columns (such as creator_id, event_teams, audit_logs) exist."""
+    Base.metadata.create_all(bind=engine)
     with engine.begin() as conn:
         try:
             # Check SQLite table info
@@ -84,30 +147,52 @@ def seed_initial_events():
     db = SessionLocal()
     try:
         # Seed demo users if empty
-        if db.query(User).count() == 0:
-            demo_admin = User(
-                name="System Administrator",
-                email="admin1@unievent.edu",
-                hashed_password=auth_utils.hash_password("Admin@12345"),
-                role="Admin",
-                is_banned=False,
-            )
-            demo_organizer = User(
-                name="Event Organizer",
-                email="organizer@unievent.edu",
-                hashed_password=auth_utils.hash_password("User@12345"),
-                role="User",
-                is_banned=False,
-            )
-            demo_student = User(
-                name="Shoibe Arafat",
-                email="student@unievent.edu",
-                hashed_password=auth_utils.hash_password("User@12345"),
-                role="User",
-                is_banned=False,
-            )
-            db.add_all([demo_admin, demo_organizer, demo_student])
-            db.commit()
+        # Seed or ensure all 5 demo accounts exist (for teacher viva)
+        demo_accounts = [
+            {
+                "name": "System Administrator",
+                "email": "admin1@unievent.edu",
+                "password": "Admin@12345",
+                "role": "Admin",
+            },
+            {
+                "name": "Secondary Administrator",
+                "email": "admin2@unievent.edu",
+                "password": "Admin@12345",
+                "role": "Admin",
+            },
+            {
+                "name": "Event Organizer",
+                "email": "organizer@unievent.edu",
+                "password": "User@12345",
+                "role": "User",
+            },
+            {
+                "name": "Shoibe Arafat",
+                "email": "student@unievent.edu",
+                "password": "User@12345",
+                "role": "User",
+            },
+            {
+                "name": "Team Co-Editor",
+                "email": "editor@unievent.edu",
+                "password": "User@12345",
+                "role": "User",
+            },
+        ]
+
+        for acc in demo_accounts:
+            existing_user = db.query(User).filter(User.email == acc["email"]).first()
+            if not existing_user:
+                new_user = User(
+                    name=acc["name"],
+                    email=acc["email"],
+                    hashed_password=auth_utils.hash_password(acc["password"]),
+                    role=acc["role"],
+                    is_banned=False,
+                )
+                db.add(new_user)
+        db.commit()
 
         # Seed sample events if empty
         if db.query(Event).count() == 0:

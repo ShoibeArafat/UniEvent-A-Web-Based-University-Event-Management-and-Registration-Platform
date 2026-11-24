@@ -227,3 +227,51 @@ Explain the database architecture implemented in `backend/database.py` and `back
 
 4. **Multi-Environment Adaptability:**
    - *"In development, it uses SQLite (`sqlite:///./events.db`). For cloud deployments or Supabase, setting the `DATABASE_URL` environment variable automatically redirects SQLAlchemy to connect to PostgreSQL / Supabase with zero code changes."*
+
+---
+
+## 🛡️ Final Project Viva Questions (Parts 1–8: JWT Auth, RBAC, Teams, Admin & Supabase)
+
+### Question 6: Explain your JWT Authentication and Session Revocation architecture
+- **Access Token:** Short-lived (15 minutes), signed with `HS256`, contains user payload (`sub`, `email`, `role`, `exp`). Sent with every API call in the `Authorization: Bearer <token>` header.
+- **Refresh Token:** Long-lived (7 days). Stored in the database inside table `user_sessions`. Crucially, we store the **SHA-256 hash** of the token rather than the raw token string (protects users even if database logs are exposed).
+- **Single Database Architecture:** As per course guidelines, session records reside in the primary database (`user_sessions`), eliminating the complexity of a secondary Redis server.
+- **Revocation / Logout:** When the user clicks Logout, the endpoint `POST /api/auth/logout` sets `is_revoked = True` for that session. If an attacker attempts to reuse that refresh token, the server checks the hash in `user_sessions`, detects `is_revoked == True`, and rejects it with `401 Unauthorized`.
+
+---
+
+### Question 7: How is Role-Based Access Control (RBAC) and Event Ownership enforced?
+- **Event Creator Ownership:** Every event has a foreign key `creator_id` referencing `users.id`.
+- **Edit/Delete Permissions:**
+  - Non-authenticated requests are rejected with `401 Unauthorized`.
+  - Authenticated users attempting to edit/delete someone else's event without team editor permissions are rejected with `403 Forbidden`.
+  - Original creators can edit and delete their events.
+  - Administrators (`role == "Admin"`) have a global override bypass allowing them to edit or delete any event across the university.
+- **Frontend Badging:** The UI highlights events created by the logged-in user with a gold `★ Your Event` badge, and offers a `"My Events"` filter pill.
+
+---
+
+### Question 8: How do Shared Organizing Teams work?
+- **Auto-Provisioning:** When an event is created, an `EventTeam` is automatically generated with the creator assigned as `Owner`.
+- **4 Permission Tiers:**
+  - `Owner`: Full management, invites members, removes members, changes roles, deletes event.
+  - `Editor`: Co-organizer. Can edit event title, schedule, venue, capacity, and details.
+  - `Coordinator`: Manages attendees and logistics; read-only on event settings.
+  - `Viewer`: Read-only team visibility.
+- **Collaboration Flow:** In the `EventDetailModal`, click the **"Organizing Team"** tab. The Owner can invite any registered university user by email and assign them the `Editor` role. That user can now collaborate and edit the event!
+
+---
+
+### Question 9: What features are implemented in the Admin Dashboard?
+- **Restricted Access:** Visible only to users with `role == "Admin"` (`admin1@unievent.edu` or `admin2@unievent.edu`).
+- **KPI Metrics:** Live statistics on total users, total events, total teams, active sessions, and banned accounts.
+- **User Directory & Moderation:** Search users by name/email, filter by role/status, change user role (`User` ↔ `Admin`), and ban/unban users with an explicit reason prompt. Banned users are blocked from logging in with `403 Forbidden`.
+- **Audit Trail:** Every major action (`EVENT_CREATE`, `EVENT_UPDATE`, `EVENT_DELETE`, `TEAM_MEMBER_ADD`, `USER_BAN`, `USER_ROLE_CHANGE`) is logged to the `audit_logs` table with actor ID, timestamp, and metadata.
+- **CSV Reports:** Export formatted CSV reports for events and user rosters with one click.
+
+---
+
+### Question 10: How does the application connect to Supabase PostgreSQL?
+- In `backend/database.py`, the engine checks the `DATABASE_URL` environment variable.
+- If present, it converts standard `postgres://` prefixes to `postgresql://` (required by SQLAlchemy) and enables `pool_pre_ping=True` to maintain healthy connection pool states with Supabase transaction poolers.
+- In `backend/models.py`, `auto_migrate_schema()` and `Base.metadata.create_all()` automatically create all 6 tables on the remote Supabase database upon the first serverless request.

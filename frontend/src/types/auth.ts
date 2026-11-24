@@ -4,6 +4,7 @@ export interface User {
   email: string
   role: "User" | "Admin" | string
   is_banned: boolean
+  ban_reason?: string
   created_at?: string
 }
 

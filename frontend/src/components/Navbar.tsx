@@ -6,6 +6,7 @@ interface NavbarProps {
   totalEvents: number
   onOpenCreate: () => void
   onOpenProfile: () => void
+  onOpenAdmin?: () => void
   onLogoutToast: () => void
 }
 
@@ -13,6 +14,7 @@ export function Navbar({
   totalEvents,
   onOpenCreate,
   onOpenProfile,
+  onOpenAdmin,
   onLogoutToast,
 }: NavbarProps) {
   const { user, logout } = useAuth()
@@ -64,6 +66,13 @@ export function Navbar({
             <span>New Event</span>
           </button>
 
+          {user?.role === "Admin" && onOpenAdmin && (
+            <button className="btn btn-outline" onClick={onOpenAdmin} title="Platform Administration">
+              <SparklesIcon width={16} height={16} />
+              <span>Admin Center</span>
+            </button>
+          )}
+
           {/* User Profile & Menu */}
           <div className="user-menu-container" ref={dropdownRef}>
               <button
@@ -100,6 +109,18 @@ export function Navbar({
                   >
                     My Profile & Sessions
                   </button>
+                  {user?.role === "Admin" && onOpenAdmin && (
+                    <button
+                      type="button"
+                      className="dropdown-item text-accent"
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        onOpenAdmin()
+                      }}
+                    >
+                      Admin Center & Stats
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="dropdown-item text-danger"

@@ -13,7 +13,8 @@ if raw_db_url:
     if raw_db_url.startswith("postgres://"):
         raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
     DATABASE_URL = raw_db_url
-    engine = create_engine(DATABASE_URL)
+    # pool_pre_ping ensures stale cloud database connections (e.g. Supabase pooler) are automatically refreshed
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 else:
     # If running on Vercel serverless environment, write SQLite to /tmp
     if os.getenv("VERCEL"):
