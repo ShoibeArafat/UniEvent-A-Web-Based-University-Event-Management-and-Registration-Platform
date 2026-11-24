@@ -42,7 +42,7 @@ flowchart LR
 |---|---|
 | Student | Search events, create student events, participate in event teams |
 | Organizer | Create departmental events, manage organizing teams and permissions |
-| Administrator | System oversight, KPI analytics, user moderation/banning, audit logs, CSV exports |
+| Administrator | System oversight, KPI analytics, user moderation/banning, and audit logs |
 
 ### 2.3 Operating Environment
 - Modern desktop or mobile web browser.

@@ -8,7 +8,6 @@ import {
   updateUserStatus,
   updateUserRole,
   getAuditLogs,
-  downloadCsvReport,
 } from "../services/adminApi"
 import {
   UsersIcon,
@@ -138,17 +137,6 @@ export function AdminModal({ isOpen, onClose, onSuccessToast }: AdminModalProps)
     }
   }
 
-  // Handle CSV Export
-  const handleExport = async (type: "events" | "users") => {
-    if (!token) return
-    try {
-      await downloadCsvReport(type, token)
-      onSuccessToast?.(`Downloaded ${type} CSV report!`)
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Export failed")
-    }
-  }
-
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-content modal-admin" onClick={(e) => e.stopPropagation()}>
@@ -260,30 +248,6 @@ export function AdminModal({ isOpen, onClose, onSuccessToast }: AdminModalProps)
                     <div className="admin-kpi-value">{stats.admin_count}</div>
                     <div className="admin-kpi-label">System Admins</div>
                   </div>
-                </div>
-              </div>
-
-              {/* Reports & Exports */}
-              <div className="admin-export-section mt-6">
-                <h4 className="font-bold text-sm text-main mb-2">Export Official Reports (CSV)</h4>
-                <p className="text-xs text-muted mb-3">
-                  Download spreadsheet data for faculty committee meetings, university records, and audits.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => handleExport("events")}
-                  >
-                    Download Events CSV
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary btn-sm"
-                    onClick={() => handleExport("users")}
-                  >
-                    Download Users CSV
-                  </button>
                 </div>
               </div>
             </div>

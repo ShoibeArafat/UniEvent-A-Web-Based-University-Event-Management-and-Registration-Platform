@@ -267,7 +267,6 @@ Explain the database architecture implemented in `backend/database.py` and `back
 - **KPI Metrics:** Live statistics on total users, total events, total teams, active sessions, and banned accounts.
 - **User Directory & Moderation:** Search users by name/email, filter by role/status, change user role (`User` ↔ `Admin`), and ban/unban users with an explicit reason prompt. Banned users are blocked from logging in with `403 Forbidden`.
 - **Audit Trail:** Every major action (`EVENT_CREATE`, `EVENT_UPDATE`, `EVENT_DELETE`, `TEAM_MEMBER_ADD`, `USER_BAN`, `USER_ROLE_CHANGE`) is logged to the `audit_logs` table with actor ID, timestamp, and metadata.
-- **CSV Reports:** Export formatted CSV reports for events and user rosters with one click.
 
 ---
 

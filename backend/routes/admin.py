@@ -2,10 +2,8 @@
 Admin Dashboard & Audit Logging routes (Part 5).
 Strictly protected by require_admin dependency.
 Provides system metrics, user management (ban/unban, role assignment),
-audit log viewing, and CSV report export.
+and audit log viewing.
 """
-import io
-import csv
 from datetime import datetime
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -222,45 +220,3 @@ def get_audit_logs(
         )
         for log in logs
     ]
-
-
-@router.get(
-    "/export/csv",
-    summary="Export platform data as CSV",
-    description="Generates downloadable CSV report for events or users.",
-)
-def export_csv(
-    report_type: str = Query("events", pattern="^(events|users)$"),
-    db: Session = Depends(get_db),
-    current_admin: User = Depends(require_admin),
-):
-    output = io.StringIO()
-    writer = csv.writer(output)
-
-    if report_type == "events":
-        events = db.query(Event).order_by(Event.id.asc()).all()
-        writer.writerow(["ID", "Title", "Category", "Status", "Date", "Location", "Organizer", "Capacity", "Creator Email", "Created At"])
-        for e in events:
-            creator_email = e.creator.email if e.creator else "None"
-            writer.writerow([
-                e.id, e.title, e.category, e.status, e.event_date,
-                e.location, e.organizer, e.capacity, creator_email,
-                e.created_at.strftime("%Y-%m-%d %H:%M:%S") if e.created_at else ""
-            ])
-        filename = f"unievent_events_report_{datetime.utcnow().strftime('%Y%m%d')}.csv"
-    else:
-        users = db.query(User).order_by(User.id.asc()).all()
-        writer.writerow(["ID", "Name", "Email", "Role", "Banned", "Ban Reason", "Joined At"])
-        for u in users:
-            writer.writerow([
-                u.id, u.name, u.email, u.role, u.is_banned, u.ban_reason or "",
-                u.created_at.strftime("%Y-%m-%d %H:%M:%S") if u.created_at else ""
-            ])
-        filename = f"unievent_users_report_{datetime.utcnow().strftime('%Y%m%d')}.csv"
-
-    output.seek(0)
-    return Response(
-        content=output.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )

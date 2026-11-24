@@ -41,7 +41,6 @@ UniEvent is built following a clean layered architecture with a single unified d
 - **KPI Overview Metrics:** Live counts of registered users, published events, collaborative teams, active sessions, and banned accounts.
 - **User Directory Management:** Search, role/status filtering, role promotion (`User` ↔ `Admin`), and account ban/unban with documented reason.
 - **Audit Logging System:** Comprehensive trail recording `action`, `actor_id`, `resource_type`, `resource_id`, and `details`.
-- **CSV Data Export:** One-click CSV reports for both events and user rosters.
 
 ### 5. Cloud Database Integration (Supabase PostgreSQL & SQLite)
 - **Automatic Fallback:** Uses local SQLite (`backend/events.db`) in local environments, and connects seamlessly to Supabase PostgreSQL when `DATABASE_URL` is set.
@@ -55,7 +54,7 @@ The application seeds 5 ready-to-test accounts representing all permission level
 
 | Role | University Email | Password | Permissions & Intended Test Flow |
 |---|---|---|---|
-| **Admin 1** | `admin1@unievent.edu` | `Admin@12345` | Primary Admin. Can access Admin Center, ban users, view audit trail, export CSV, and override any event. |
+| **Admin 1** | `admin1@unievent.edu` | `Admin@12345` | Primary Admin. Can access Admin Center, ban users, view audit trail, and override any event. |
 | **Admin 2** | `admin2@unievent.edu` | `Admin@12345` | Secondary Admin. Multi-admin governance testing. |
 | **Student** | `student@unievent.edu` | `User@12345` | Student / Attendee (`Shoibe Arafat`). Creates personal events, tests creator permissions. |
 | **Organizer** | `organizer@unievent.edu` | `User@12345` | Department organizer. Owns seeded university events (Tech Fest, ICPC Contest). |
@@ -160,7 +159,6 @@ python test_parts_4_5.py     # Part 4 & 5: Teams, Admin & Audit (16 tests)
 | `PUT` | `/api/admin/users/{id}/status` | Ban or unban user with reason | Admin Only |
 | `PUT` | `/api/admin/users/{id}/role` | Promote or demote user role (`User` ↔ `Admin`) | Admin Only |
 | `GET` | `/api/admin/audit-logs` | Retrieve system-wide audit activity trail | Admin Only |
-| `GET` | `/api/admin/export/csv` | Download CSV data export (`?type=events` or `?type=users`) | Admin Only |
 
 ---
 

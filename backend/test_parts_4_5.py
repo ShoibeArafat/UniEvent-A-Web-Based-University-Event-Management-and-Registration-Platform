@@ -11,8 +11,8 @@ Tests:
 8. Admin stats (/api/admin/stats) returns KPI metrics.
 9. Admin user management: list, filter, ban, unban, role update.
 10. Banned user cannot log in.
-11. Audit logs (/api/admin/audit-logs) records activity.
-12. CSV Export (/api/admin/export/csv) returns valid CSV headers and data.
+11. Secondary admin blocked from ban/unban moderation (403 Forbidden).
+12. Audit logs (/api/admin/audit-logs) records activity.
 """
 import sys
 import time
@@ -196,13 +196,6 @@ def run_tests():
         actions = [l["action"] for l in logs]
         assert "USER_BAN" in actions or "EVENT_CREATE" in actions
         print(f"15. Retrieved {len(logs)} audit log entries (Actions tracked: {list(set(actions))[:4]})")
-
-        # 16. CSV Export
-        csv_res = client.get("/api/admin/export/csv?report_type=events", headers=admin_headers)
-        assert csv_res.status_code == 200
-        assert "text/csv" in csv_res.headers.get("content-type", "")
-        assert "ID,Title,Category" in csv_res.text
-        print("16. Event CSV export verified with correct headers and rows")
 
     print("\n" + "=" * 65)
     print("🎉 ALL PARTS 4 & 5 BACKEND TESTS PASSED SUCCESSFULLY!")

@@ -86,22 +86,3 @@ export async function getAuditLogs(
   })
   return handleResponse<AuditLogEntry[]>(res)
 }
-
-export async function downloadCsvReport(
-  reportType: "events" | "users",
-  token: string
-): Promise<void> {
-  const res = await fetch(`${API_BASE}/export/csv?report_type=${reportType}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  if (!res.ok) throw new Error("Failed to export report CSV")
-  const blob = await res.blob()
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `unievent_${reportType}_report.csv`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  window.URL.revokeObjectURL(url)
-}
