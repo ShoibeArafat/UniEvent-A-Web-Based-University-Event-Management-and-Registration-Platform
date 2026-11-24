@@ -9,9 +9,11 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 raw_db_url = os.getenv("DATABASE_URL")
 
 if raw_db_url:
-    # SQLAlchemy requires postgresql:// instead of postgres://
+    # Ensure postgresql+psycopg2:// driver dialect is used with psycopg2-binary
     if raw_db_url.startswith("postgres://"):
-        raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+        raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif raw_db_url.startswith("postgresql://") and not raw_db_url.startswith("postgresql+"):
+        raw_db_url = raw_db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
     DATABASE_URL = raw_db_url
     # pool_pre_ping ensures stale cloud database connections (e.g. Supabase pooler) are automatically refreshed
     engine = create_engine(DATABASE_URL, pool_pre_ping=True)
