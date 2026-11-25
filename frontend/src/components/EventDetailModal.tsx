@@ -247,7 +247,7 @@ export function EventDetailModal({ eventId, onClose, onEdit, onDelete }: EventDe
                       <input
                         type="email"
                         className="form-input text-sm"
-                        placeholder="Invite student by email (e.g. organizer@unievent.edu)"
+                        placeholder="Invite student by email (e.g. student2@unievent.edu)"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
                         required

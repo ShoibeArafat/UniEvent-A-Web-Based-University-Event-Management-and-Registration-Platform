@@ -46,11 +46,11 @@ def run_rbac_tests():
         student_id = student_res.json()["user"]["id"]
         print(f"   ✓ Student logged in (User ID: {student_id})")
 
-        organizer_res = client.post("/api/auth/login", json={"email": "organizer@unievent.edu", "password": "User@12345"})
-        assert organizer_res.status_code == 200, f"Organizer login failed: {organizer_res.text}"
-        organizer_token = organizer_res.json()["access_token"]
-        organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
-        print("   ✓ Organizer logged in (User ID: different user)")
+        student2_res = client.post("/api/auth/login", json={"email": "student2@unievent.edu", "password": "Tanvir#2026!"})
+        assert student2_res.status_code == 200, f"Student 2 login failed: {student2_res.text}"
+        student2_token = student2_res.json()["access_token"]
+        student2_headers = {"Authorization": f"Bearer {student2_token}"}
+        print("   ✓ Student 2 logged in (User ID: different user)")
 
         # 3. Test unauthenticated event creation rejection
         print("\n3. Testing unauthenticated event creation rejection...")
@@ -85,15 +85,15 @@ def run_rbac_tests():
         assert owner_update_res.json()["capacity"] == 75
         print("   ✓ Event creator successfully updated their own event")
 
-        # 6. Non-creator (Organizer) tries to update Student's event -> 403 Forbidden
-        print("\n6. Testing non-owner (Organizer) update rejection...")
-        non_owner_update_res = client.put(f"/api/events/{event_id}", json={"title": "Hacked Title"}, headers=organizer_headers)
+        # 6. Non-creator (Student 2) tries to update Student's event -> 403 Forbidden
+        print("\n6. Testing non-owner (Student 2) update rejection...")
+        non_owner_update_res = client.put(f"/api/events/{event_id}", json={"title": "Hacked Title"}, headers=student2_headers)
         assert non_owner_update_res.status_code == 403, f"Expected 403 Forbidden, got: {non_owner_update_res.status_code}"
         print(f"   ✓ Non-owner modification blocked with 403 Forbidden: {non_owner_update_res.json()['detail']}")
 
-        # 7. Non-creator (Organizer) tries to delete Student's event -> 403 Forbidden
-        print("\n7. Testing non-owner (Organizer) delete rejection...")
-        non_owner_del_res = client.delete(f"/api/events/{event_id}", headers=organizer_headers)
+        # 7. Non-creator (Student 2) tries to delete Student's event -> 403 Forbidden
+        print("\n7. Testing non-owner (Student 2) delete rejection...")
+        non_owner_del_res = client.delete(f"/api/events/{event_id}", headers=student2_headers)
         assert non_owner_del_res.status_code == 403, f"Expected 403 Forbidden, got: {non_owner_del_res.status_code}"
         print(f"   ✓ Non-owner deletion blocked with 403 Forbidden: {non_owner_del_res.json()['detail']}")
 

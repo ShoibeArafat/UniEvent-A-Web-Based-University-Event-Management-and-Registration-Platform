@@ -34,7 +34,7 @@ def run_tests():
     seed_initial_events()
 
     with TestClient(app) as client:
-        # Log in Admin, Student (Creator), and Organizer (Co-member)
+        # Log in Admin, Student (Creator), and Student 2 (Co-member)
         admin_res = client.post("/api/auth/login", json={"email": "admin1@unievent.edu", "password": "Admin@12345"})
         admin_token = admin_res.json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
@@ -44,10 +44,10 @@ def run_tests():
         student_headers = {"Authorization": f"Bearer {student_token}"}
         student_id = student_res.json()["user"]["id"]
 
-        organizer_res = client.post("/api/auth/login", json={"email": "organizer@unievent.edu", "password": "User@12345"})
-        organizer_token = organizer_res.json()["access_token"]
-        organizer_headers = {"Authorization": f"Bearer {organizer_token}"}
-        organizer_id = organizer_res.json()["user"]["id"]
+        student2_res = client.post("/api/auth/login", json={"email": "student2@unievent.edu", "password": "Tanvir#2026!"})
+        student2_token = student2_res.json()["access_token"]
+        student2_headers = {"Authorization": f"Bearer {student2_token}"}
+        student2_id = student2_res.json()["user"]["id"]
 
         # ==========================================
         # PART 4: TEAMS TESTS
@@ -77,19 +77,19 @@ def run_tests():
         assert any(m["user_id"] == student_id and m["role"] == "Owner" for m in team_data["members"])
         print(f"2. Verified Event Team '{team_data['name']}' has creator as Owner")
 
-        # 3. Student invites Organizer as 'Editor'
+        # 3. Student invites Student 2 as 'Editor'
         invite_res = client.post(f"/api/events/{event_id}/team/members", json={
-            "email": "organizer@unievent.edu",
+            "email": "student2@unievent.edu",
             "role": "Editor"
         }, headers=student_headers)
         assert invite_res.status_code == 201
-        assert any(m["user_id"] == organizer_id and m["role"] == "Editor" for m in invite_res.json()["members"])
-        print("3. Successfully invited Organizer as 'Editor' on the team")
+        assert any(m["user_id"] == student2_id and m["role"] == "Editor" for m in invite_res.json()["members"])
+        print("3. Successfully invited Student 2 as 'Editor' on the team")
 
-        # 4. Verified Shared Collaboration: Organizer (Editor) updates the event!
+        # 4. Verified Shared Collaboration: Student 2 (Editor) updates the event!
         editor_update_res = client.put(f"/api/events/{event_id}", json={
-            "description": "Collaborative update made by team Editor (organizer)."
-        }, headers=organizer_headers)
+            "description": "Collaborative update made by team Editor (student 2)."
+        }, headers=student2_headers)
         assert editor_update_res.status_code == 200
         assert "Collaborative update" in editor_update_res.json()["description"]
         print("4. Team Editor successfully edited the event (Shared Collaboration working!)")
@@ -98,27 +98,27 @@ def run_tests():
         unauth_add_res = client.post(f"/api/events/{event_id}/team/members", json={
             "email": "admin1@unievent.edu",
             "role": "Viewer"
-        }, headers=organizer_headers)
+        }, headers=student2_headers)
         assert unauth_add_res.status_code == 403
         print("5. Non-owner/non-admin correctly blocked from adding members (403 Forbidden)")
 
-        # 6. Owner updates Organizer's role to 'Coordinator'
-        update_role_res = client.put(f"/api/events/{event_id}/team/members/{organizer_id}", json={
+        # 6. Owner updates Student 2's role to 'Coordinator'
+        update_role_res = client.put(f"/api/events/{event_id}/team/members/{student2_id}", json={
             "role": "Coordinator"
         }, headers=student_headers)
         assert update_role_res.status_code == 200
-        assert any(m["user_id"] == organizer_id and m["role"] == "Coordinator" for m in update_role_res.json()["members"])
+        assert any(m["user_id"] == student2_id and m["role"] == "Coordinator" for m in update_role_res.json()["members"])
         print("6. Successfully updated member role to 'Coordinator'")
 
         # 7. Coordinator can NO longer edit event settings
-        coord_update_res = client.put(f"/api/events/{event_id}", json={"description": "Should fail"}, headers=organizer_headers)
+        coord_update_res = client.put(f"/api/events/{event_id}", json={"description": "Should fail"}, headers=student2_headers)
         assert coord_update_res.status_code == 403
         print("7. Coordinator correctly blocked from modifying event settings (403 Forbidden)")
 
         # 8. Owner removes member
-        del_member_res = client.delete(f"/api/events/{event_id}/team/members/{organizer_id}", headers=student_headers)
+        del_member_res = client.delete(f"/api/events/{event_id}/team/members/{student2_id}", headers=student_headers)
         assert del_member_res.status_code == 200
-        assert not any(m["user_id"] == organizer_id for m in del_member_res.json()["members"])
+        assert not any(m["user_id"] == student2_id for m in del_member_res.json()["members"])
         print("8. Successfully removed member from team")
 
         # ==========================================

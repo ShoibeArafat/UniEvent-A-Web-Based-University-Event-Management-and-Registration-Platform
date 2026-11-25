@@ -50,15 +50,17 @@ UniEvent is built following a clean layered architecture with a single unified d
 
 ## 🔑 Demo Accounts (For Teacher Assessment & Viva)
 
-The application seeds 5 ready-to-test accounts representing all permission levels:
+The application seeds ready-to-test accounts representing administrative and student permission levels:
 
 | Role | University Email | Password | Permissions & Intended Test Flow |
 |---|---|---|---|
-| **Admin 1** | `admin1@unievent.edu` | `Admin@12345` | Primary Admin. Can access Admin Center, ban users, view audit trail, and override any event. |
-| **Admin 2** | `admin2@unievent.edu` | `Admin@12345` | Secondary Admin. Multi-admin governance testing. |
-| **Student** | `student@unievent.edu` | `User@12345` | Student / Attendee (`Shoibe Arafat`). Creates personal events, tests creator permissions. |
-| **Organizer** | `organizer@unievent.edu` | `User@12345` | Department organizer. Owns seeded university events (Tech Fest, ICPC Contest). |
-| **Co-Editor** | `editor@unievent.edu` | `User@12345` | Team collaborator account. Used to demonstrate collaborative team editing. |
+| **Admin 1** | `admin1@unievent.edu` | `Admin@12345` | Primary Admin. Can access Admin Center, ban/unban users, view audit trail, and override any event. |
+| **Admin 2** | `admin2@unievent.edu` | `Admin@12345` | Secondary Admin. Multi-admin governance testing (read-only audit/user oversight). |
+| **Student 1** | `student@unievent.edu` | `User@12345` | Student (`Shoibe Arafat`). Owns university events, creates personal events, tests creator permissions. |
+| **Student 2** | `student2@unievent.edu` | `Tanvir#2026!` | Student (`Tanvir Ahmed`). Test collaborator account for organizing teams and RBAC checks. |
+| **Student 3** | `student3@unievent.edu` | `Nafis@Pass99` | Student (`Nafis Fuad`). Dedicated student account with unique credentials. |
+| **Student 4** | `student4@unievent.edu` | `Sadia*Secure1` | Student (`Sadia Rahman`). Dedicated student account with unique credentials. |
+| **Student 5** | `student5@unievent.edu` | `Farhan#Key2026` | Student (`Farhan Kabir`). Dedicated student account with unique credentials. |
 
 *Quick-fill demo buttons are built right into the Login screen for instant 1-click credential loading during demonstration!*
 

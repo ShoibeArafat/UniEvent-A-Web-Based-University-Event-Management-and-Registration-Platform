@@ -162,21 +162,33 @@ def seed_initial_events():
                 "role": "Admin",
             },
             {
-                "name": "Event Organizer",
-                "email": "organizer@unievent.edu",
-                "password": "User@12345",
-                "role": "User",
-            },
-            {
                 "name": "Shoibe Arafat",
                 "email": "student@unievent.edu",
                 "password": "User@12345",
                 "role": "User",
             },
             {
-                "name": "Team Co-Editor",
-                "email": "editor@unievent.edu",
-                "password": "User@12345",
+                "name": "Tanvir Ahmed",
+                "email": "student2@unievent.edu",
+                "password": "Tanvir#2026!",
+                "role": "User",
+            },
+            {
+                "name": "Nafis Fuad",
+                "email": "student3@unievent.edu",
+                "password": "Nafis@Pass99",
+                "role": "User",
+            },
+            {
+                "name": "Sadia Rahman",
+                "email": "student4@unievent.edu",
+                "password": "Sadia*Secure1",
+                "role": "User",
+            },
+            {
+                "name": "Farhan Kabir",
+                "email": "student5@unievent.edu",
+                "password": "Farhan#Key2026",
                 "role": "User",
             },
         ]
@@ -196,7 +208,7 @@ def seed_initial_events():
 
         # Seed sample events if empty
         if db.query(Event).count() == 0:
-            default_creator = db.query(User).filter(User.email == "organizer@unievent.edu").first()
+            default_creator = db.query(User).filter(User.email == "student@unievent.edu").first()
             creator_id = default_creator.id if default_creator else None
 
             sample_events = [
