@@ -3,46 +3,78 @@
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20(TypeScript)-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Bundler-Vite%208-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
-[![Vercel](https://img.shields.io/badge/Deployment-Vercel-000000?logo=vercel&logoColor=white)](https://vercel.com)
+[![Database](https://img.shields.io/badge/Database-SQLite%20%7C%20Supabase%20PostgreSQL-336791?logo=postgresql&logoColor=white)](https://supabase.com)
+[![Deployment](https://img.shields.io/badge/Deployment-Vercel-000000?logo=vercel&logoColor=white)](https://2131108.vercel.app)
 
-A web-based university event management platform built for **CSE309: Web Development (Mid Project MVP)**.
+A full-stack, enterprise-grade university event management platform engineered for **CSE309: Web Engineering Final Project**.
 
----
-
-## 🎯 MVP Feature: Event Management CRUD
-
-For the Mid-Term 30-mark assessment, this project implements a complete, end-to-end **Event Management** feature with all 5 CRUD operations integrated across React frontend, FastAPI backend, and SQLite/Supabase database:
-
-1. **Create:** Add a new university event with validation (title, description, venue, date, organizer, category, capacity, status).
-2. **Read Single:** Inspect the detailed view of a specific event via `GET /api/events/{id}`.
-3. **Read List:** Browse all events in responsive cards, with live search and category filtering ("Technology", "Competition", "Workshop", "Cultural", "Seminar").
-4. **Update:** Edit any existing event's details via `PUT /api/events/{id}` with pre-populated form inputs.
-5. **Delete:** Remove an event via `DELETE /api/events/{id}` with a confirmation modal and feedback alert.
+- 🌐 **Live Production Site:** [https://2131108.vercel.app](https://2131108.vercel.app)
+- 📖 **Interactive Swagger UI:** [https://2131108.vercel.app/api/docs](https://2131108.vercel.app/api/docs)
 
 ---
 
-## 📊 Mark Distribution (30 Marks Total)
+## 🎯 System Architecture & Key Features
 
-| Component | Marks | Status |
-|---|:---:|---|
-| **Frontend Implementation** (React + TypeScript CRUD, Modals, Search/Filter, Responsive UI) | **10** | Complete |
-| **Backend Implementation** (FastAPI REST API, Pydantic schemas, SQLAlchemy ORM, SQLite/Supabase) | **10** | Complete |
-| **GitHub Presentation** (Issue, Feature Branch, Conventional Commits, PR Workflow) | **10** | Documented |
-| **Total** | **30** | Ready for Viva |
+UniEvent is built following a clean layered architecture with a single unified database, token revocation, role-based authorization, and collaborative team permissions:
+
+### 1. Dual-Token JWT Authentication & Session Revocation
+- **Short-lived Access Tokens (15 min):** Transmitted via Bearer authorization headers.
+- **Long-lived Refresh Tokens (7 days):** Stored securely and hashed using SHA-256 in the database (`user_sessions`).
+- **Immediate Session Invalidation:** Logging out instantly sets `is_revoked = True` in the database, preventing token replay attacks.
+- **Dedicated Login Portal:** Full-screen responsive authentication gateway with tab switching (Sign In vs Create Account) and quick demo accounts for examiners.
+
+### 2. Event Management CRUD & RBAC Ownership
+- **Complete CRUD Operations:** Create, Read (single & paginated list), Update, and Delete with input validation.
+- **Event Ownership:** Events are tagged with `creator_id`. Only the creator, authorized team members, or Administrators can edit/delete events.
+- **Role Badges & Dashboard Filtering:** Visual badges (`★ Your Event`, `Admin`) and dedicated `"My Events"` filter view.
+
+### 3. Shared Organizing Teams (Collaborative Permissions)
+- **1-to-1 Event Teams:** An event team is automatically provisioned whenever an event is created, setting the creator as **Owner**.
+- **4 Permission Tiers:**
+  - **Owner:** Full event management, team member invites, role changes, and deletion.
+  - **Editor:** Can edit event schedule, capacity, and details.
+  - **Coordinator:** Can view team operations and manage event logistics.
+  - **Viewer:** Read-only access to team roster and event settings.
+- **Two-Tab Modal:** Overview and Organizing Team tabs within `EventDetailModal`.
+
+### 4. Administrator Center & Governance
+- **KPI Overview Metrics:** Live counts of registered users, published events, collaborative teams, active sessions, and banned accounts.
+- **User Directory Management:** Search, role/status filtering, role promotion (`User` ↔ `Admin`), and account ban/unban with documented reason.
+- **Audit Logging System:** Comprehensive trail recording `action`, `actor_id`, `resource_type`, `resource_id`, and `details`.
+
+### 5. Cloud Database Integration (Supabase PostgreSQL & SQLite)
+- **Automatic Fallback:** Uses local SQLite (`backend/events.db`) in local environments, and connects seamlessly to Supabase PostgreSQL when `DATABASE_URL` is set.
+- **Zero-Migration Engine:** `Base.metadata.create_all()` and automated schema migration on application startup.
 
 ---
 
-## 🚀 Quickstart: Running Locally
+## 🔑 Demo Accounts (For Teacher Assessment & Viva)
+
+The application seeds ready-to-test accounts representing administrative and student permission levels:
+
+| Role | University Email | Password | Permissions & Intended Test Flow |
+|---|---|---|---|
+| **Admin 1** | `admin1@unievent.edu` | `Admin@12345` | Primary Admin. Can access Admin Center, ban/unban users, view audit trail, and override any event. |
+| **Admin 2** | `admin2@unievent.edu` | `Admin@12345` | Secondary Admin. Multi-admin governance testing (read-only audit/user oversight). |
+| **Student 1** | `student@unievent.edu` | `User@12345` | Student (`Shoibe Arafat`). Owns university events, creates personal events, tests creator permissions. |
+| **Student 2** | `student2@unievent.edu` | `Tanvir#2026!` | Student (`Tanvir Ahmed`). Test collaborator account for organizing teams and RBAC checks. |
+| **Student 3** | `student3@unievent.edu` | `Nafis@Pass99` | Student (`Nafis Fuad`). Dedicated student account with unique credentials. |
+| **Student 4** | `student4@unievent.edu` | `Sadia*Secure1` | Student (`Sadia Rahman`). Dedicated student account with unique credentials. |
+| **Student 5** | `student5@unievent.edu` | `Farhan#Key2026` | Student (`Farhan Kabir`). Dedicated student account with unique credentials. |
+
+*Quick-fill demo buttons are built right into the Login screen for instant 1-click credential loading during demonstration!*
+
+---
+
+## 🚀 Running the Project Locally
 
 ### Prerequisites
-- **Python 3.10+**
+- **Python 3.10+** (Python 3.11 recommended)
 - **Node.js 20+** or **Node.js 22+**
 
 ---
 
 ### Step 1: Run Backend (FastAPI)
-
-In a new terminal:
 
 ```bash
 cd backend
@@ -58,17 +90,13 @@ pip install -r requirements.txt
 fastapi dev main.py
 ```
 
-- Backend server: **http://localhost:8000**
+- Backend Server: **http://localhost:8000**
 - Interactive Swagger UI: **http://localhost:8000/docs**
-- ReDoc Documentation: **http://localhost:8000/redoc**
-
-*Note: On first startup, the server automatically initializes `events.db` and seeds sample university events.*
+- Health Check: **http://localhost:8000/api/health**
 
 ---
 
-### Step 2: Run Frontend (React + TypeScript)
-
-In a second terminal:
+### Step 2: Run Frontend (React + Vite + TypeScript)
 
 ```bash
 cd frontend
@@ -80,61 +108,78 @@ npm install
 npm run dev
 ```
 
-- Frontend application: **http://localhost:5173**
-- Vite automatically proxies `/api/*` calls to the backend running at `http://localhost:8000`.
+- Frontend Application: **http://localhost:5173**
+- Vite proxies `/api/*` requests directly to `http://localhost:8000`.
+
+---
+
+### Step 3: Run Automated Test Suites
+
+```bash
+cd backend
+python test_auth.py          # Part 1 & 2: JWT & Token Revocation (8 tests)
+python test_rbac.py          # Part 3: Ownership & RBAC (10 tests)
+python test_parts_4_5.py     # Part 4 & 5: Teams, Admin & Audit (16 tests)
+```
 
 ---
 
 ## 🌐 REST API Endpoints Specification
 
-| Method | Endpoint | Description | Status Code |
+### Authentication & Sessions
+| Method | Endpoint | Description | Access |
 |---|---|---|:---:|
-| `POST` | `/api/events` | Create a new event record | `201 Created` |
-| `GET` | `/api/events` | List all events (supports `?category=...&search=...`) | `200 OK` |
-| `GET` | `/api/events/{id}` | Read full details for a single event | `200 OK` (or `404`) |
-| `PUT` | `/api/events/{id}` | Update existing event record | `200 OK` (or `404`) |
-| `DELETE` | `/api/events/{id}` | Permanently delete an event record | `200 OK` (or `404`) |
-| `GET` | `/api/health` | Health check endpoint | `200 OK` |
+| `POST` | `/api/auth/signup` | Register new university account | Public |
+| `POST` | `/api/auth/login` | Authenticate & receive access + refresh tokens | Public |
+| `POST` | `/api/auth/refresh` | Exchange valid refresh token for new access token | Public |
+| `POST` | `/api/auth/logout` | Revoke active refresh token session in database | Authenticated |
+| `GET` | `/api/users/me` | Fetch currently authenticated user profile | Authenticated |
+| `GET` | `/api/users/me/sessions` | View user's active session history | Authenticated |
+
+### Events (CRUD & RBAC)
+| Method | Endpoint | Description | Access |
+|---|---|---|:---:|
+| `GET` | `/api/events` | Browse events (supports `?category=...&search=...`) | Public |
+| `GET` | `/api/events/{id}` | Read full details of a specific event | Public |
+| `POST` | `/api/events` | Create new event record (auto-creates EventTeam) | Authenticated |
+| `PUT` | `/api/events/{id}` | Update event details | Owner / Editor / Admin |
+| `DELETE` | `/api/events/{id}` | Permanently delete event | Owner / Admin |
+
+### Shared Event Teams
+| Method | Endpoint | Description | Access |
+|---|---|---|:---:|
+| `GET` | `/api/events/{id}/team` | Get organizing team and member roster | Authenticated |
+| `POST` | `/api/events/{id}/team/members` | Invite new member by email (Editor/Coordinator/Viewer) | Owner / Admin |
+| `PUT` | `/api/events/{id}/team/members/{user_id}` | Update member permission role | Owner / Admin |
+| `DELETE` | `/api/events/{id}/team/members/{user_id}` | Remove member from organizing team | Owner / Admin |
+
+### Administration Center
+| Method | Endpoint | Description | Access |
+|---|---|---|:---:|
+| `GET` | `/api/admin/stats` | System overview KPIs (users, events, teams, sessions) | Admin Only |
+| `GET` | `/api/admin/users` | Filtered user directory list | Admin Only |
+| `PUT` | `/api/admin/users/{id}/status` | Ban or unban user with reason | Admin Only |
+| `PUT` | `/api/admin/users/{id}/role` | Promote or demote user role (`User` ↔ `Admin`) | Admin Only |
+| `GET` | `/api/admin/audit-logs` | Retrieve system-wide audit activity trail | Admin Only |
 
 ---
 
-## 🗄️ Database Model (`Event`)
+## 🗄️ Database Schema & Entities
 
-The database table `events` is defined using SQLAlchemy ORM:
+The application utilizes 5 core relational tables in SQLAlchemy ORM:
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | Integer | Primary Key, Auto-increment | Unique identifier |
-| `title` | String(200) | Not Null, Indexed | Event name |
-| `description` | Text | Not Null | Detailed event description |
-| `location` | String(200) | Not Null | Venue / Auditorium / Lab |
-| `event_date` | String(50) | Not Null | Scheduled date (YYYY-MM-DD) |
-| `organizer` | String(150) | Not Null | Department / Club / Committee |
-| `category` | String(100) | Not Null, Indexed | Technology, Workshop, etc. |
-| `capacity` | Integer | Default: 100 | Maximum attendee capacity |
-| `status` | String(50) | Default: "Upcoming" | Upcoming / Ongoing / Completed / Cancelled |
-| `created_at` | DateTime | Default: `utcnow` | Creation timestamp |
-| `updated_at` | DateTime | Auto-updated on modify | Modification timestamp |
-
-*Database configuration:* By default uses local SQLite (`backend/events.db`). If `DATABASE_URL` is set in the environment, it seamlessly connects to PostgreSQL / Supabase.
+1. **`users`**: User records, hashed passwords, roles (`Admin` / `User`), ban status and reason.
+2. **`user_sessions`**: Active refresh tokens tracked by SHA-256 hash, expiration date, and revocation flag (`is_revoked`).
+3. **`events`**: Event titles, dates, descriptions, categories, capacity, status, and foreign key `creator_id`.
+4. **`event_teams`**: 1-to-1 organizing team entity linked to each event.
+5. **`team_members`**: Event collaborators with role tier (`Owner`, `Editor`, `Coordinator`, `Viewer`).
+6. **`audit_logs`**: System audit records with action codes, timestamps, actors, and detailed event metadata.
 
 ---
 
-## 🧪 Viva Preparation Guides
+## ☁️ Deployment Architecture (Vercel + Supabase)
 
-Complete guides are provided in the `docs/` folder:
-- 📖 **[Viva & Feature Demonstration Guide](docs/VIVA_AND_DEMO_GUIDE.md)**: Answers and walkthroughs for all 5 viva questions (CRUD demo, DevTools Network tab, REST API, Postman testing, Database models).
-- 🐙 **[GitHub Presentation & PR Guide](docs/GITHUB_WORKFLOW_GUIDE.md)**: Exact issue titles, branch names, commit messages, and PR templates for maximum marks.
-
----
-
-## ☁️ Deploying to Vercel
-
-The project root includes `vercel.json` configured with two services:
-1. `backend`: FastAPI service mapped to `/api/*`.
-2. `frontend`: Vite static service mapped to `/*`.
-
-To deploy:
-1. Connect this repository on [Vercel](https://vercel.com/new).
-2. Set Root Directory to `./`.
-3. Click **Deploy**. Both services will build and deploy under one shared domain!
+The root repository includes `vercel.json` configuring dual-service serverless hosting:
+- **Backend Service:** FastAPI ASGI application deployed as a Python serverless function handling `/api/*`.
+- **Frontend Service:** React TypeScript application compiled with Vite, deployed to Vercel Edge CDN.
+- **Database:** Supabase PostgreSQL cloud instance connected via `DATABASE_URL` with transaction pooling enabled.

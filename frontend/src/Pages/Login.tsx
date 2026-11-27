@@ -133,6 +133,13 @@ export default function Login({ onSuccess }: LoginProps) {
               <button
                 type="button"
                 className="demo-pill-btn"
+                onClick={() => fillDemoAccount("admin2@unievent.edu", "Admin@12345")}
+              >
+                Admin 2 (admin2)
+              </button>
+              <button
+                type="button"
+                className="demo-pill-btn"
                 onClick={() => fillDemoAccount("student@unievent.edu", "User@12345")}
               >
                 Student (student)
@@ -140,9 +147,23 @@ export default function Login({ onSuccess }: LoginProps) {
               <button
                 type="button"
                 className="demo-pill-btn"
-                onClick={() => fillDemoAccount("organizer@unievent.edu", "User@12345")}
+                onClick={() => fillDemoAccount("student2@unievent.edu", "Tanvir#2026!")}
               >
-                Organizer (organizer)
+                Student 2 (Tanvir)
+              </button>
+              <button
+                type="button"
+                className="demo-pill-btn"
+                onClick={() => fillDemoAccount("student3@unievent.edu", "Nafis@Pass99")}
+              >
+                Student 3 (Nafis)
+              </button>
+              <button
+                type="button"
+                className="demo-pill-btn"
+                onClick={() => fillDemoAccount("student4@unievent.edu", "Sadia*Secure1")}
+              >
+                Student 4 (Sadia)
               </button>
             </div>
           </div>

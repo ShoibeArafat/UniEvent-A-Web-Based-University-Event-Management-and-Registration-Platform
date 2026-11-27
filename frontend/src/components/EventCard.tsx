@@ -1,5 +1,6 @@
 import type { Event } from "../types/event"
 import { CalendarIcon, MapPinIcon, UsersIcon, EditIcon, TrashIcon, EyeIcon } from "./Icons"
+import { useAuth } from "../context/AuthContext"
 
 interface EventCardProps {
   event: Event
@@ -9,6 +10,11 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onView, onEdit, onDelete }: EventCardProps) {
+  const { user } = useAuth()
+  const isOwner = Boolean(user && event.creator_id && user.id === event.creator_id)
+  const isAdmin = user?.role === "Admin"
+  const canManage = isOwner || isAdmin
+
   // Format date nicely
   function formatDate(dateStr: string) {
     try {
@@ -60,8 +66,20 @@ export function EventCard({ event, onView, onEdit, onDelete }: EventCardProps) {
   return (
     <div className="event-card">
       <div className="event-card-header">
-        <span className={`badge ${getCategoryClass(event.category)}`}>{event.category}</span>
-        <span className={`badge ${getStatusClass(event.status)}`}>{event.status}</span>
+        <div className="flex gap-1.5 flex-wrap">
+          <span className={`badge ${getCategoryClass(event.category)}`}>{event.category}</span>
+          <span className={`badge ${getStatusClass(event.status)}`}>{event.status}</span>
+        </div>
+        {isOwner && (
+          <span className="badge badge-owner" title="You are the creator of this event">
+            ★ Your Event
+          </span>
+        )}
+        {!isOwner && isAdmin && (
+          <span className="badge badge-admin-control" title="Admin access to manage this event">
+            Admin
+          </span>
+        )}
       </div>
 
       <h3 className="event-title" title={event.title}>
@@ -85,7 +103,9 @@ export function EventCard({ event, onView, onEdit, onDelete }: EventCardProps) {
 
         <div className="event-meta-item">
           <UsersIcon width={16} height={16} className="meta-icon" />
-          <span className="truncate">By {event.organizer} • Max {event.capacity}</span>
+          <span className="truncate">
+            By {event.organizer} {event.creator_name ? `(${event.creator_name})` : ""} • Max {event.capacity}
+          </span>
         </div>
       </div>
 
@@ -99,24 +119,26 @@ export function EventCard({ event, onView, onEdit, onDelete }: EventCardProps) {
           <span>Details</span>
         </button>
 
-        <div className="event-card-actions">
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => onEdit(event)}
-            title="Edit event"
-          >
-            <EditIcon width={15} height={15} />
-            <span>Edit</span>
-          </button>
-          <button
-            className="btn btn-danger btn-sm"
-            onClick={() => onDelete(event)}
-            title="Delete event"
-          >
-            <TrashIcon width={15} height={15} />
-            <span>Delete</span>
-          </button>
-        </div>
+        {canManage && (
+          <div className="event-card-actions">
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => onEdit(event)}
+              title={isOwner ? "Edit your event" : "Edit as Admin"}
+            >
+              <EditIcon width={15} height={15} />
+              <span>Edit</span>
+            </button>
+            <button
+              className="btn btn-danger btn-sm"
+              onClick={() => onDelete(event)}
+              title={isOwner ? "Delete your event" : "Delete as Admin"}
+            >
+              <TrashIcon width={15} height={15} />
+              <span>Delete</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

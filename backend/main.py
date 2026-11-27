@@ -18,6 +18,8 @@ from models import seed_initial_events
 from routes.events import router as events_router
 from routes.auth import router as auth_router
 from routes.users import router as users_router
+from routes.teams import router as teams_router
+from routes.admin import router as admin_router
 
 
 @asynccontextmanager
@@ -55,10 +57,24 @@ def openapi_redirect():
     return RedirectResponse(url="/api/openapi.json")
 
 
-# Enable CORS for local development and Vercel deployments
+# Configure CORS origins: local development, preview deployments, and production
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_env:
+    allowed_origins = [o.strip() for o in allowed_origins_env.split(",") if o.strip()]
+else:
+    allowed_origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "https://2131108.vercel.app",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -68,6 +84,8 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(events_router)
+app.include_router(teams_router)
+app.include_router(admin_router)
 
 
 # Health check endpoint

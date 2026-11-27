@@ -1,3 +1,5 @@
+/** authentication frontend */
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
 import type { User } from "../types/auth"
 import {

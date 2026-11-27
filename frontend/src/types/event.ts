@@ -1,5 +1,7 @@
 export interface Event {
   id: number
+  creator_id?: number
+  creator_name?: string
   title: string
   description: string
   location: string

@@ -9,6 +9,7 @@ import { EventModal } from "./components/EventModal"
 import { EventDetailModal } from "./components/EventDetailModal"
 import { DeleteConfirmModal } from "./components/DeleteConfirmModal"
 import { ProfileModal } from "./components/ProfileModal"
+import { AdminModal } from "./components/AdminModal"
 import { Toast, type ToastMessage } from "./components/Toast"
 import { SearchIcon, PlusIcon, CalendarIcon, SparklesIcon, UsersIcon } from "./components/Icons"
 
@@ -24,6 +25,7 @@ export default function App() {
   // Filtering states
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
+  const [filterOnlyMine, setFilterOnlyMine] = useState(false)
 
   // Event modal states
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -31,8 +33,9 @@ export default function App() {
   const [viewingEventId, setViewingEventId] = useState<number | null>(null)
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null)
 
-  // Profile modal state
+  // Profile & Admin modal states
   const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [adminModalOpen, setAdminModalOpen] = useState(false)
 
   // Toast feedback
   const [toasts, setToasts] = useState<ToastMessage[]>([])
@@ -135,7 +138,9 @@ export default function App() {
 
   // 3. Authenticated: Render Full Dashboard
   const upcomingCount = events.filter((e) => e.status.toLowerCase() === "upcoming").length
+  const myEventsCount = events.filter((e) => Boolean(user && e.creator_id === user.id)).length
   const uniqueOrganizers = new Set(events.map((e) => e.organizer)).size
+  const displayedEvents = filterOnlyMine && user ? events.filter((e) => e.creator_id === user.id) : events
 
   return (
     <div className="app-layout">
@@ -144,6 +149,7 @@ export default function App() {
         totalEvents={events.length}
         onOpenCreate={handleOpenCreate}
         onOpenProfile={() => setProfileModalOpen(true)}
+        onOpenAdmin={() => setAdminModalOpen(true)}
         onLogoutToast={() => addToast("info", "You have signed out successfully.")}
       />
 
@@ -186,8 +192,8 @@ export default function App() {
                 <UsersIcon width={22} height={22} className="text-accent" />
               </div>
               <div>
-                <div className="stat-value">{uniqueOrganizers}</div>
-                <div className="stat-label">Active Organizers</div>
+                <div className="stat-value">{myEventsCount}</div>
+                <div className="stat-label">Events You Created</div>
               </div>
             </div>
           </div>
@@ -215,12 +221,25 @@ export default function App() {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
-                className={`category-pill ${selectedCategory === cat ? "active" : ""}`}
-                onClick={() => setSelectedCategory(cat)}
+                className={`category-pill ${selectedCategory === cat && !filterOnlyMine ? "active" : ""}`}
+                onClick={() => {
+                  setSelectedCategory(cat)
+                  setFilterOnlyMine(false)
+                }}
               >
                 {cat}
               </button>
             ))}
+            {user && (
+              <button
+                type="button"
+                className={`category-pill ${filterOnlyMine ? "active badge-owner" : ""}`}
+                onClick={() => setFilterOnlyMine(!filterOnlyMine)}
+                title="Filter events created by your account"
+              >
+                ★ My Events ({myEventsCount})
+              </button>
+            )}
           </div>
         </section>
 
@@ -240,10 +259,14 @@ export default function App() {
         <section className="events-section">
           <div className="events-header">
             <h3 className="section-title">
-              {selectedCategory === "All" ? "All Events" : `${selectedCategory} Events`}
+              {filterOnlyMine
+                ? "My Created Events"
+                : selectedCategory === "All"
+                ? "All Events"
+                : `${selectedCategory} Events`}
             </h3>
             <span className="text-muted text-sm">
-              Showing {events.length} {events.length === 1 ? "result" : "results"}
+              Showing {displayedEvents.length} {displayedEvents.length === 1 ? "result" : "results"}
             </span>
           </div>
 
@@ -252,14 +275,18 @@ export default function App() {
               <div className="spinner"></div>
               <p className="mt-3 text-muted">Loading events...</p>
             </div>
-          ) : events.length === 0 ? (
+          ) : displayedEvents.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">
                 <CalendarIcon width={48} height={48} />
               </div>
-              <h4 className="empty-state-title">No events found</h4>
+              <h4 className="empty-state-title">
+                {filterOnlyMine ? "You haven't created any events yet" : "No events found"}
+              </h4>
               <p className="empty-state-text">
-                {searchQuery || selectedCategory !== "All"
+                {filterOnlyMine
+                  ? "Click 'Create New Event' above to publish your first university event."
+                  : searchQuery || selectedCategory !== "All"
                   ? "Try adjusting your search terms or category filter to discover more university events."
                   : "No events have been created yet. Be the first to publish a new university event!"}
               </p>
@@ -270,7 +297,7 @@ export default function App() {
             </div>
           ) : (
             <div className="events-grid">
-              {events.map((event) => (
+              {displayedEvents.map((event) => (
                 <EventCard
                   key={event.id}
                   event={event}
@@ -319,6 +346,13 @@ export default function App() {
         isOpen={profileModalOpen}
         onClose={() => setProfileModalOpen(false)}
         onSuccess={(msg) => addToast("success", msg)}
+      />
+
+      {/* 5. Admin Dashboard & User Management Modal */}
+      <AdminModal
+        isOpen={adminModalOpen}
+        onClose={() => setAdminModalOpen(false)}
+        onSuccessToast={(msg) => addToast("success", msg)}
       />
 
       {/* Toast notifications */}

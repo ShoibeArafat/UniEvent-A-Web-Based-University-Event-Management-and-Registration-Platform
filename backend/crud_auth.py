@@ -1,4 +1,4 @@
-"""
+"""  Create and update user..... also user jwd session manage..
 CRUD operations for User authentication, password management, and revocable sessions.
 """
 from datetime import datetime

@@ -26,8 +26,8 @@ class EventService:
         return crud.get_event_by_id(db=db, event_id=event_id)
 
     @staticmethod
-    def create(db: Session, event_in: EventCreate) -> Event:
-        return crud.create_event(db=db, event_in=event_in)
+    def create(db: Session, event_in: EventCreate, creator_id: Optional[int] = None) -> Event:
+        return crud.create_event(db=db, event_in=event_in, creator_id=creator_id)
 
     @staticmethod
     def update(db: Session, db_event: Event, event_in: EventUpdate) -> Event:

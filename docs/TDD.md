@@ -17,36 +17,33 @@ Goals:
 
 | Layer | Technology | Responsibility |
 |---|---|---|
-| Frontend | React.js | Pages, forms, dashboards |
-| Styling | Tailwind CSS or CSS modules | Responsive UI |
-| Routing | React Router | Navigation |
-| API client | Axios or fetch | HTTP requests |
-| Backend | Node.js + Express.js | REST API and business logic |
-| Database | MySQL | Relational persistence |
-| Authentication | JWT or secure sessions | Identify signed-in users |
-| Password hashing | bcrypt | Store password hashes |
-| Testing | Postman + automated tests | API/workflow testing |
-| Version control | Git/GitHub | Change history |
-
-Choose one authentication approach for the final implementation and use it consistently.
+| Frontend | React 19 + TypeScript | Components, modals, forms, dashboards |
+| Styling | CSS3 & Custom Variables | Clean, modern, responsive UI design |
+| Bundler & Dev | Vite 8 | Ultra-fast HMR and production bundling |
+| API client | Fetch API / TypeScript Services | Typed REST API interactions |
+| Backend | Python 3.11 + FastAPI | Async REST API, route handlers, middleware |
+| Database ORM | SQLAlchemy 2.0 | Declarative ORM models, relations, queries |
+| Database | SQLite / Supabase PostgreSQL | Single relational database with pooling |
+| Authentication | Dual-Token JWT (HS256) | 15-min access + 7-day SHA-256 hashed refresh tokens |
+| Password hashing | bcrypt | Secure password hashing & salting |
+| Testing | Pytest & TestClient | 34 automated unit, integration, and security tests |
+| Deployment | Vercel Serverless | Python ASGI backend + Edge CDN frontend |
 
 ## 3. High-Level Architecture
 
 ```mermaid
 flowchart TB
     B[Browser: Student / Organizer / Admin]
-    FE[React Frontend]
-    API[Express REST API]
-    MW[Authentication + RBAC Middleware]
-    SVC[Business Services]
-    DB[(MySQL Database)]
-    FS[Poster / Certificate Storage]
+    FE[React TypeScript Frontend]
+    API[FastAPI REST API Engine]
+    MW[JWT Auth + Revocation + RBAC Dependencies]
+    SVC[Event, Team, Admin & Audit Services]
+    DB[(Unified SQLite / Supabase DB)]
     B --> FE
-    FE -->|HTTPS + JSON| API
+    FE -->|HTTPS Bearer JWT + JSON| API
     API --> MW
     MW --> SVC
     SVC --> DB
-    SVC --> FS
 ```
 
 ### Responsibilities
