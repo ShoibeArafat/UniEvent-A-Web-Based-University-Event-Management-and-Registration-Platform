@@ -1,4 +1,4 @@
-"""
+""" authentication endpont...
 Authentication API endpoints: Signup, Login, Token Refresh, and Logout.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, status

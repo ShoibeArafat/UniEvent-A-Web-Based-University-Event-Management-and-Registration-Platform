@@ -1,4 +1,4 @@
-"""
+""" token generate.. Authentication code...
 Authentication utility functions for UniEvent.
 Provides password hashing (bcrypt), JWT access token generation/verification (PyJWT),
 and cryptographically secure SHA-256 hashed refresh token management.

@@ -1,4 +1,4 @@
-"""
+"""  User ban unban check 
 FastAPI security dependencies for authentication and authorization.
 Provides get_current_user, get_optional_user, and require_admin.
 """
